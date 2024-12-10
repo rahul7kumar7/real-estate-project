@@ -23,5 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 .env
+jsconfig.json
 
 https://www.youtube.com/watch?v=VAaUy_Moivw&t=167s

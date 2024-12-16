@@ -24,5 +24,6 @@ dist-ssr
 *.sw?
 .env
 jsconfig.json
-
+package-lock.json
+package.json
 https://www.youtube.com/watch?v=VAaUy_Moivw&t=167s

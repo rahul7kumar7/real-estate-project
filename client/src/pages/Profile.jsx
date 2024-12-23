@@ -1,12 +1,5 @@
 import { useSelector } from 'react-redux';
 import { useRef, useState, useEffect } from 'react';
-import {
-  getDownloadURL,
-  getStorage,
-  ref,
-  uploadBytesResumable,
-} from 'firebase/storage';
-import { app } from '../firebase';
 import {updateUserStart, updateUserFailure, updateUserSuccess, deleteUserStart, deleteUserFailure, deleteUserSuccess, signOutUserStart, signOutUserFailure, signOutUserSuccess} from "../redux/user/userSlice.js";
 import {useDispatch} from "react-redux";
 
@@ -94,35 +87,94 @@ export default function Profile() {
     }
   }, [file]);
 
-  const handleFileUpload = (file) => {
-    const storage = getStorage(app);
-    const fileName = new Date().getTime() + file.name;
-    const storageRef = ref(storage, fileName);
-    const uploadTask = uploadBytesResumable(storageRef, file);
+  const handleFileUpload = async (file) => {
+    console.log(`file is ${file.name}`);
+    if (!file) {
+      return;
+    }
 
-    uploadTask.on(
-        'state_changed',
-        (snapshot) => {
-          const progress =
-              (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setFilePerc(Math.round(progress));
-        },
-        (error) => {
-          setFileUploadError(true);
-        },
-        () => {
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) =>
-              setFormData({ ...formData, avatar: downloadURL })
-          );
-        }
-    );
-  };
+    const maxFileSize = 2 * 1024 * 1024;
+
+    if (file.size > maxFileSize) {
+      setFileUploadError(true);
+      return;
+    }
+    setFileUploadError(false);
+    const data = new FormData();
+    data.append('file', file);
+    data.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+    data.append('cloud_name', import.meta.env.VITE_CLOUDINARY_CLOUD_NAME);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', import.meta.env.VITE_CLOUDINARY_UPLOAD_ENDPOINT);
+
+    xhr.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable) {
+        const progress = (event.loaded / event.total) * 100;
+        console.log(`Upload progress: ${progress}%`);
+        setFilePerc(Math.round(progress));
+      }
+    });
+
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        const response = JSON.parse(xhr.responseText);
+        setFormData({...formData, avatar: response.url});
+        console.log('File uploaded successfully', response.url);
+      } else {
+        console.error(`Upload failed;`, xhr.statusText);
+        setFileUploadError(true);
+      }
+    }
+
+    xhr.onerror = () => {
+      console.log('Upload failed;', xhr.statusText);
+      setFileUploadError(true);
+    };
+
+    xhr.send(data);
+
+      // const res = await fetch(import.meta.env.VITE_CLOUDINARY_UPLOAD_ENDPOINT, {
+      //   method: 'POST',
+      //   body: data
+      // });
+      // if (!res.ok) {
+      //   console.log(res);
+      //   setFileUploadError(true);
+      // }
+      // const downloadURL = await res.json();
+      // setFormData({...formData, avatar: downloadURL.url})
+      // console.log(downloadURL.url);
+  }
+    // old firebase code to upload image.....
+    // const storage = getStorage(app);
+    // const fileName = new Date().getTime() + file.name;
+    // const storageRef = ref(storage, fileName);
+    // const uploadTask = uploadBytesResumable(storageRef, file);
+    //
+    // uploadTask.on(
+    //     'state_changed',
+    //     (snapshot) => {
+    //       const progress =
+    //           (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+    //       setFilePerc(Math.round(progress));
+    //     },
+    //     (error) => {
+    //       setFileUploadError(true);
+    //     },
+    //     () => {
+    //       getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) =>
+    //           setFormData({ ...formData, avatar: downloadURL })
+    //       );
+    //     }
+    // );
+  // };
   return (
       <div className='p-3 max-w-lg mx-auto'>
         <h1 className='text-3xl font-semibold text-center my-7'>Profile</h1>
         <form onSubmit={handleSubmit} className='flex flex-col gap-4'>
           <input
               onChange={(e) => setFile(e.target.files[0])}
+              // onChange={handleFileUpload}
               type='file'
               ref={fileRef}
               hidden

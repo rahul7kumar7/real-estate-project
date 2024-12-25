@@ -182,7 +182,6 @@ export default function Profile() {
         return;
       }
       setUserListings(data);
-      console.log(data);
     } catch (error) {
       setListingError(error.message);
     }

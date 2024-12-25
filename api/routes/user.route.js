@@ -1,5 +1,5 @@
 import express from 'express';
-import {test, updateUser, deleteUser} from '../controllers/user.controller.js'
+import {test, updateUser, deleteUser, getUserListings} from '../controllers/user.controller.js'
 import {verifyToken} from "../utils/verifyUser.js";
 
 const route = express.Router();
@@ -7,5 +7,6 @@ const route = express.Router();
 route.get('/test', test);
 route.post('/update/:id', verifyToken, updateUser);
 route.delete('/delete/:id', verifyToken, deleteUser);
+route.get('/listings/:id', verifyToken, getUserListings);
 
 export default route;

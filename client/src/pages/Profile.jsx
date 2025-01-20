@@ -108,7 +108,7 @@ export default function Profile() {
     data.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
     data.append('cloud_name', import.meta.env.VITE_CLOUDINARY_CLOUD_NAME);
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', import.meta.env.VITE_CLOUDINARY_UPLOAD_ENDPOINT);
+      xhr.open('POST', import.meta.env.VITE_CLOUDINARY_UPLOAD_ENDPOINT);
 
     xhr.upload.addEventListener('progress', (event) => {
       if (event.lengthComputable) {
@@ -136,41 +136,7 @@ export default function Profile() {
 
     xhr.send(data);
 
-      // const res = await fetch(import.meta.env.VITE_CLOUDINARY_UPLOAD_ENDPOINT, {
-      //   method: 'POST',
-      //   body: data
-      // });
-      // if (!res.ok) {
-      //   console.log(res);
-      //   setFileUploadError(true);
-      // }
-      // const downloadURL = await res.json();
-      // setFormData({...formData, avatar: downloadURL.url})
-      // console.log(downloadURL.url);
   }
-    // old firebase code to upload image.....
-    // const storage = getStorage(app);
-    // const fileName = new Date().getTime() + file.name;
-    // const storageRef = ref(storage, fileName);
-    // const uploadTask = uploadBytesResumable(storageRef, file);
-    //
-    // uploadTask.on(
-    //     'state_changed',
-    //     (snapshot) => {
-    //       const progress =
-    //           (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-    //       setFilePerc(Math.round(progress));
-    //     },
-    //     (error) => {
-    //       setFileUploadError(true);
-    //     },
-    //     () => {
-    //       getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) =>
-    //           setFormData({ ...formData, avatar: downloadURL })
-    //       );
-    //     }
-    // );
-  // };
 
   const showListing = async () => {
     try {

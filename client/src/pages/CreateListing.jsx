@@ -1,11 +1,4 @@
 import { useState } from 'react';
-import {
-    getDownloadURL,
-    getStorage,
-    ref,
-    uploadBytesResumable,
-} from 'firebase/storage';
-import { app } from '../firebase';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
@@ -13,6 +6,7 @@ export default function CreateListing() {
     const { currentUser } = useSelector((state) => state.user);
     const navigate = useNavigate();
     const [files, setFiles] = useState([]);
+    const [filePerc, setFilePerc] = useState(0);
     const [formData, setFormData] = useState({
         imageUrls: [],
         name: '',
@@ -62,26 +56,35 @@ export default function CreateListing() {
 
     const storeImage = async (file) => {
         return new Promise((resolve, reject) => {
-            const storage = getStorage(app);
-            const fileName = new Date().getTime() + file.name;
-            const storageRef = ref(storage, fileName);
-            const uploadTask = uploadBytesResumable(storageRef, file);
-            uploadTask.on(
-                'state_changed',
-                (snapshot) => {
-                    const progress =
-                        (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    console.log(`Upload is ${progress}% done`);
-                },
-                (error) => {
-                    reject(error);
-                },
-                () => {
-                    getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-                        resolve(downloadURL);
-                    });
+            const data = new FormData();
+            data.append('file', file);
+            data.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
+            data.append('cloud_name', import.meta.env.VITE_CLOUDINARY_CLOUD_NAME);
+            const xhr = new XMLHttpRequest();
+            xhr.open(`POST`, import.meta.env.VITE_CLOUDINARY_UPLOAD_ENDPOINT);
+            xhr.upload.addEventListener('progress', (event) => {
+                const progress = (event.loaded / event.total) * 100;
+                console.log(`uploading progress: ${progress}`);
+                setFilePerc(Math.round(progress));
+            });
+
+            xhr.onload = () => {
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    resolve(response.url);
+                    console.log('File uploaded successfully', response.url);
+                } else {
+                    console.error(`Upload failed ${xhr.statusText}`);
+                    reject(xhr.statusText);
                 }
-            );
+            }
+
+            xhr.onerror = (e) => {
+                console.error(`Upload failed ${xhr.statusText}`);
+                reject(xhr.statusText);
+            }
+
+            xhr.send(data);
         });
     };
 
@@ -329,9 +332,9 @@ export default function CreateListing() {
                             type='button'
                             disabled={uploading}
                             onClick={handleImageSubmit}
-                            className='p-3 text-green-700 border border-green-700 rounded uppercase hover:shadow-lg disabled:opacity-80'
+                            className='p-3 text-green-700 border border-green-700 rounded uppercase hover:shadow-lg disabled:opacity-80 text-sm'
                         >
-                            {uploading ? 'Uploading...' : 'Upload'}
+                            {uploading ? `Uploading ${filePerc}%` : 'Upload'}
                         </button>
                     </div>
                     <p className='text-red-700 text-sm'>
